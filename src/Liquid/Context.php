@@ -52,6 +52,13 @@ class Context
 	private $tickFunction = null;
 
 	/**
+	 * Called instead of throw Exception.
+	 *
+	 * @var null|callable
+	 */
+	private $errorCatcherFunction = null;
+
+	/**
 	 * Constructor
 	 *
 	 * @param array $assigns
@@ -93,6 +100,16 @@ class Context
 	}
 
 	/**
+	 * Sets an error fucntion catcher, this function is called when an error occur instead throw Exception.
+	 *
+	 * @param callable $errorCatcherFunction
+	 */
+	public function setErrorCatcher(callable $errorCatcherFunction)
+	{
+		$this->errorCatcherFunction = $errorCatcherFunction;
+	}
+
+	/**
 	 * Add a filter to the context
 	 *
 	 * @param mixed $filter
@@ -116,7 +133,11 @@ class Context
 		try {
 			return $this->filterbank->invoke($name, $value, $args);
 		} catch (\TypeError $typeError) {
-			throw new LiquidException($typeError->getMessage(), 0, $typeError);
+			if($this->errorCatcherFunction) {
+				call_user_func ($this->errorCatcherFunction, $typeError);
+			} else {
+				throw new LiquidException($typeError->getMessage(), 0, $typeError);
+			}
 		}
 	}
 
@@ -273,6 +294,10 @@ class Context
 
 				return $obj;
 			}
+		}
+
+		if($this->errorCatcherFunction !== null) {
+			call_user_func ($this->errorCatcherFunction, new LiquidVariableNotFoundException($key, 1));
 		}
 
 		return null;

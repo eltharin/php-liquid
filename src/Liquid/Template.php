@@ -58,6 +58,12 @@ class Template
 	private static $cache;
 
 	/**
+	 * @var callable|null Called instead throw Exception
+	 */
+	private $errorCatcherFunction = null;
+
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $path
@@ -161,6 +167,11 @@ class Template
 		$this->tickFunction = $tickFunction;
 	}
 
+	public function setErrorCatcher(Callable $errorCatcherFunction)
+	{
+		$this->errorCatcherFunction = $errorCatcherFunction;
+	}
+
 	/**
 	 * Tokenizes the given source string
 	 *
@@ -246,6 +257,10 @@ class Template
 
 		if ($this->tickFunction) {
 			$context->setTickFunction($this->tickFunction);
+		}
+
+		if ($this->errorCatcherFunction) {
+			$context->setErrorCatcher($this->errorCatcherFunction);
 		}
 
 		if (!is_null($filters)) {
